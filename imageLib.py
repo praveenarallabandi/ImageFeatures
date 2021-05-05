@@ -63,7 +63,7 @@ def histogram(image: np.array) -> np.array:
 def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
 
     bins = len(hist)
-    print(bins)
+    # print(bins)
     histogramStart = 0
     while hist[histogramStart] < min_count:
         print('hist[histogramStart] : %s histogramStart : %s', hist[histogramStart], histogramStart)
@@ -73,7 +73,10 @@ def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
     while hist[histogramEnd] < min_count:
         histogramEnd -= 1
 
-    histogramCenter = int(round(np.average(np.linspace(0, 2 ** 8 - 1, bins), weights=hist)))
+    maxVal = 255.0
+    print('Maxval: %s', maxVal)
+
+    histogramCenter = int(round(np.average(np.linspace(0, maxVal, bins), weights=hist)))
     left = np.sum(hist[histogramStart:histogramCenter])
     right = np.sum(hist[histogramCenter : histogramEnd + 1])
 
@@ -84,16 +87,16 @@ def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
         else:
             right -= hist[histogramEnd]
             histogramEnd -= 1
-        new_center = int(round((histogramEnd + histogramStart) / 2))
+        calculatedCenter = int(round((histogramEnd + histogramStart) / 2))
 
-        if new_center < histogramCenter:
+        if calculatedCenter < histogramCenter:
             left -= hist[histogramCenter]
             right += hist[histogramCenter]
-        elif new_center > histogramCenter:
+        elif calculatedCenter > histogramCenter:
             left += hist[histogramCenter]
             right -= hist[histogramCenter]
 
-        histogramCenter = new_center
+        histogramCenter = calculatedCenter
 
     return histogramCenter
 
