@@ -63,23 +63,29 @@ def processImageFeatures(entry, imgLabel):
         # print(histogramResult)
         # print(len(bins2))
 
-        # Histogram - mean calculation
-        histogramMean = np.mean(histogramResult)
-        print('Mean %d', histogramMean)
-
         # Histogram calculation for each individual image
         openResult = opening(singleSpectrumSegmentedImage, histogramResult)
         print(openResult)
 
-        # Calculate area
-        areaCalculated = area(openResult)
-        print('area - areaCalculated')
-        print(areaCalculated)
+        # Feature1 - Calculate Entropy
+        entropyResultFeature1 = entropy(singleSpectrumSegmentedImage, histogramResult)
+        print('entropyResultFeature1 %s', entropyResultFeature1)
 
-        # Calculate entropy
-        entropyResult = entropy(singleSpectrumSegmentedImage, histogramResult)
-        print('entropyResult')
-        print(entropyResult)
+        # Feature2 - Calculate Area
+        areaCalculatedFeature2 = area(openResult)
+        print('areaCalculatedFeature2 - %s', areaCalculatedFeature2)
+
+        # Feature 3 - Calculate Mean
+        histogramMeanFeature3 = np.mean(histogramResult)
+        print('histogramMeanFeature3 %d', histogramMeanFeature3)
+
+        # Feature 4 - Calcualte bound radius
+        boundRadiusFeature4 = calculateBoundRadius(openResult)
+        print('boundRadiusFeature4 %d', boundRadiusFeature4)
+
+        # Feature 5 - Last column label name
+        labelFeature5 = imgLabel
+        print('labelFeature5 %d', labelFeature5)
 
     except Exception as e:
         print('Error %s', e)

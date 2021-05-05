@@ -211,3 +211,49 @@ def entropy(image: np.array, hist: np.array) -> int:
     entropy = -np.sum(np.multiply(marg, np.log2(marg)))
 
     return entropy
+
+def calculateBoundRadius(segmented_img: np.array) -> float:
+
+    center = np.array((0.0, 0.0))  # Fake init radius
+
+    radius = 0.0001  # Fake init radius
+
+    for _ in range(2):
+        for pos, x in np.ndenumerate(segmented_img):
+
+            arr_pos = np.array(pos)
+
+            if x != 0:  # Only was pixels a part of the object
+                continue
+
+            # dist = distance(arr_pos, center) # Doesn't work because numba is stupid
+            diff = arr_pos - center
+            dist = np.sqrt(np.sum(diff ** 2))
+
+            if dist < radius:
+                continue
+
+            alpha = dist / radius
+            alphaSq = alpha ** 2
+
+            radius = 0.5 * (alpha + 1.0 / alpha) * radius
+
+            center = 0.5 * (
+                (1.0 + 1.0 / alphaSq) * center + (1.0 - 1.0 / alphaSq) * arr_pos
+            )
+
+    for idx, _ in np.ndenumerate(segmented_img):
+
+        arr_pos = np.array(idx)
+
+        # dist = distance(arr_pos, center) # Doesn't work because numba is stupid
+        diff = arr_pos - center
+        dist = np.sqrt(np.sum(diff ** 2))
+
+        if dist < radius:
+            break
+
+        radius = (radius + dist) / 2.0
+        center += (dist - radius) / dist * np.subtract(arr_pos, center)
+
+    return radius
