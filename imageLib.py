@@ -1,4 +1,5 @@
 # imports
+from ImageAnalysisPart1 import convertToSingleColorSpectrum
 import os
 import toml
 import numpy as np  
@@ -114,40 +115,68 @@ def histogramThresholding(image: np.array, hist: np.array) -> np.array:
 
     return imageCopy.reshape(image.shape)
 
-def erode(img_arr: np.array, window: int = 1) -> np.array:
+def erode(image: np.array, erosion_level: int = 3) -> np.array:
 
-    r = np.zeros_like(img_arr)
-    [yy, xx] = np.where(img_arr > 0)
+    """ structuring_kernel = np.full(shape=(erosion_level, erosion_level), fill_value=255)
+    # image_src = binarize_this(image_file=image_file)
 
-    off = np.tile(range(-window, window + 1), (2 * window + 1, 1))
+    orig_shape = image_src.shape
+    pad_width = erosion_level - 2
+    print('padwidth %d', pad_width)
+    print('image_src %d', image_src.shape)
+    # pad the matrix with `pad_width`
+    image_pad = np.pad(image_src, (pad_width, pad_width), mode='constant')
+    pimg_shape = image_pad.shape
+    h_reduce, w_reduce = (pimg_shape[0] - orig_shape[0]), (pimg_shape[1] - orig_shape[1])
+
+    # sub matrices of kernel size
+    flat_submatrices = np.array([
+        image_pad[i:(i + erosion_level), j:(j + erosion_level)]
+        for i in range(pimg_shape[0] - h_reduce) for j in range(pimg_shape[1] - w_reduce)
+    ])
+
+    # condition to replace the values - if the kernel equal to submatrix then 255 else 0
+    image_erode = np.array([255 if (i == structuring_kernel).all() else 0 for i in flat_submatrices])
+    image_erode = image_erode.reshape(orig_shape)
+
+    return image_erode """
+    r = np.zeros_like(image)
+    [yy, xx] = np.where(image > 0)
+
+    # prepare neighborhoods
+    off = np.tile(range(-erosion_level, erosion_level + 1), (2 * erosion_level + 1, 1))
     x_off = off.flatten()
     y_off = off.T.flatten()
 
+    # duplicate each neighborhood element for each index
     n = len(xx.flatten())
     x_off = np.tile(x_off, (n, 1)).flatten()
     y_off = np.tile(y_off, (n, 1)).flatten()
 
-    ind = np.sqrt(x_off ** 2 + y_off ** 2) > window
+    # round out offset
+    ind = np.sqrt(x_off ** 2 + y_off ** 2) > erosion_level
     x_off[ind] = 0
     y_off[ind] = 0
 
-    xx = np.tile(xx, ((2 * window + 1) ** 2))
-    yy = np.tile(yy, ((2 * window + 1) ** 2))
+    # duplicate each index for each neighborhood element
+    xx = np.tile(xx, ((2 * erosion_level + 1) ** 2))
+    yy = np.tile(yy, ((2 * erosion_level + 1) ** 2))
 
     nx = xx + x_off
     ny = yy + y_off
 
+    # bounds checking
     ny[ny < 0] = 0
-    ny[ny > img_arr.shape[0] - 1] = img_arr.shape[0] - 1
+    ny[ny > image.shape[0] - 1] = image.shape[0] - 1
     nx[nx < 0] = 0
-    nx[nx > img_arr.shape[1] - 1] = img_arr.shape[1] - 1
+    nx[nx > image.shape[1] - 1] = image.shape[1] - 1
 
     r[ny, nx] = 255
 
     return r.astype(np.uint8)
 
-def dilate(img_arr: np.array, window: int = 1) -> np.array:
-    inverted_img = np.invert(img_arr)
+def dilate(image: np.array, window: int = 1) -> np.array:
+    inverted_img = np.invert(image)
     eroded_inverse = erode(inverted_img, window).astype(np.uint8)
     eroded_img = np.invert(eroded_inverse)
 
@@ -156,9 +185,29 @@ def dilate(img_arr: np.array, window: int = 1) -> np.array:
 def opening(image: np.array, histogram: np.array) -> np.array:
     imageThresholding = histogramThresholding(image, histogram)
     print('SegmentedImage - HistThresholding')
-    eroded = erode(imageThresholding, 1)
+    eroded = erode(imageThresholding, 3)
     print('Erode - HistThresholding')
+    print(erode)
     opened = dilate(eroded, 1)
     print('Dilate - HistThresholding')
 
     return opened
+
+def area(image: np.array) -> int:
+
+    unique, counts = np.unique(image, return_counts=True)
+    counter = dict(zip(unique, counts))
+
+    blackPixels = counter[0]
+    print('unique %s counts %s', unique, counts)
+    print('blackPixels %s', blackPixels)
+    return blackPixels
+
+def entropy(image: np.array, hist: np.array) -> int:
+
+    marg = hist / image.size
+    marg = np.array(list(filter(lambda p: p > 0, marg)))
+
+    entropy = -np.sum(np.multiply(marg, np.log2(marg)))
+
+    return entropy

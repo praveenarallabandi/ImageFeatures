@@ -63,10 +63,23 @@ def processImageFeatures(entry, imgLabel):
         # print(histogramResult)
         # print(len(bins2))
 
+        # Histogram - mean calculation
+        histogramMean = np.mean(histogramResult)
+        print('Mean %d', histogramMean)
+
         # Histogram calculation for each individual image
         openResult = opening(singleSpectrumSegmentedImage, histogramResult)
         print(openResult)
 
+        # Calculate area
+        areaCalculated = area(openResult)
+        print('area - areaCalculated')
+        print(areaCalculated)
+
+        # Calculate entropy
+        entropyResult = entropy(singleSpectrumSegmentedImage, histogramResult)
+        print('entropyResult')
+        print(entropyResult)
 
     except Exception as e:
         print('Error %s', e)
