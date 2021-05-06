@@ -4,12 +4,14 @@ import os
 import toml
 import numpy as np  
 import numba as nb
+from operator import eq
 from typing import List
 import matplotlib.pyplot as plt
 import time
 import os
 from colorama import Fore, Style
 from PIL import Image # Used only for importing and exporting images
+from random import randrange
 
 def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     """Get the image based on R, G or B specturm
@@ -246,7 +248,6 @@ def calculateBoundRadius(segmented_img: np.array) -> float:
 
         arr_pos = np.array(idx)
 
-        # dist = distance(arr_pos, center) # Doesn't work because numba is stupid
         diff = arr_pos - center
         dist = np.sqrt(np.sum(diff ** 2))
 
@@ -257,3 +258,47 @@ def calculateBoundRadius(segmented_img: np.array) -> float:
         center += (dist - radius) / dist * np.subtract(arr_pos, center)
 
     return radius
+
+def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
+    resultFoldDataSet = []
+    copyFeatureDataSet = featureDataSet.copy()
+    fold_size = len(featureDataSet) // n_folds
+    for _ in range(n_folds):
+        fold = []
+
+        while len(fold) < fold_size:
+            index = randrange(len(copyFeatureDataSet))
+            fold.append(copyFeatureDataSet[index])
+            copyFeatureDataSet = np.delete(copyFeatureDataSet, index, axis=0)
+
+        resultFoldDataSet.append(fold)
+
+    return np.array(resultFoldDataSet)
+
+def euclideanDistance(row1: np.array, row2: np.array) -> float:
+    return np.linalg.norm(np.subtract(row1, row2))
+
+def getNeighbors(train: np.array, test_row: np.array, K: int) -> np.array:
+    distances = [(train_row, euclideanDistance(test_row, train_row)) for train_row in train]
+    distances.sort(key=lambda tup: tup[1])
+
+    neighbors = np.array([distances[i][0] for i in range(K)])
+
+    return neighbors
+
+def makePrediction(train: np.array, test_row: np.array, K: int = 3) -> np.array:
+    neighbors = getNeighbors(train, test_row, K)
+
+    output_values = [row[-1] for row in neighbors]
+
+    prediction = max(set(output_values), key=output_values.count)
+
+    return prediction
+
+def kNearestNeighbors(train: np.array, test: np.array, K: int) -> np.array:
+    return np.array([makePrediction(train, row, K) for row in test])
+
+def getAccuracy(actual, predicted):
+    correct = list(map(eq, actual, predicted))
+    return (sum(correct) / len(correct)) * 100.0
+    

@@ -54,14 +54,65 @@ def groupImageLabel(entries):
             if entry.name.find('svar') != -1:
                 imgLabel = 7
     
-            processImageFeatures(entry, imgLabel)
+            # processImageFeatures(entry, imgLabel)
     
-    print('Completed Processing List')
+    """ print('Completed Processing List')
     print(featuresListCsv)
-    np.savetxt('./features.csv', featuresListCsv, delimiter=',')
-    print('Done!')
+    np.savetxt(conf["CSV_FILE"], featuresListCsv, delimiter=',') """
+    print('KNN!')
+    knn()
+
+def knn():
+    try:
+        print('Test')
+        print(conf["K_MAX_BOUND"])
+        featuresDataSet = np.loadtxt(conf["CSV_FILE"], delimiter=",")
+        # print(featuresDataSet)
+        scores = []
+        K = int(conf["K_MAX_BOUND"]) 
+        totalAverage = 0
+        for k in range(1, K + 1):
+            print("Running Experiment k = {0}".format(k))
+            # 10 fold cross validation
+            folds = crossValidationSplit(featuresDataSet, conf["FOLDS"])
+            # print(folds)
+
+            for index,fold in enumerate(folds):
+                test_dataset = fold
+                copy_folds = np.copy(folds)
+                train_dataset = np.concatenate(np.delete(copy_folds, index, axis=0), axis = 0)
+                
+                actual_class_column = np.size(test_dataset,1) - 1
+                actual = test_dataset[:,actual_class_column]
+                # actual = [row[-1] for row in fold]
+                prediction = kNearestNeighbors(train_dataset, test_dataset, k)
+                accuracy = getAccuracy(actual, prediction)
+                scores.append(accuracy)
+
+            print('Scores - {0}'.format(scores))
+            print('Mean Accuracy - {0}'.format(accuracy))
+        
+        averageOfScores = sum(scores) / len(scores)
+        totalAverage += averageOfScores
+
+        finalTotalAvg = totalAverage / K
+                
+        print('Final Total Avg {0}'.format(finalTotalAvg))
+        print('******END**********')
+        
+    except Exception as e:
+        print('Error %s', e)
+        traceback.print_exc()
+        return e
 
 def processImageFeatures(entry, imgLabel: int):
+    """
+    1) Process all the segmentation images from input folder and generate features
+    2) Save the generated features array to features.csv file
+
+    Args:
+        entries ([type]): Batch files in directory
+    """
     try:
         print('Image Label - %s', imgLabel)
 
@@ -99,9 +150,7 @@ def processImageFeatures(entry, imgLabel: int):
         print('labelFeature5 %d', labelFeature5)
 
         # Add features to list for each image
-        # featuresListCsv.append(Features(entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5))
         addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5])
-        # featuresList = np.append(featuresList, addFeatureToList)
         featuresListCsv.append(addFeatureToList)
 
     except Exception as e:
