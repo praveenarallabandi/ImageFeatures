@@ -12,7 +12,16 @@ from colorama import Fore, Style
 from PIL import Image # Used only for importing and exporting images
 from imageLib import *
 
-total_start_time = time.time()
+# featuresList = np.array([])
+featuresListCsv = []
+
+class Features:
+    def __init__(self, entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5) -> None:
+        self.entropyResultFeature1 = entropyResultFeature1
+        self.areaCalculatedFeature2 = areaCalculatedFeature2
+        self.histogramMeanFeature3 = histogramMeanFeature3
+        self.boundRadiusFeature4 = boundRadiusFeature4
+        self.labelFeature5 = labelFeature5
 
 def groupImageLabel(entries):
     """Group images into class based on their name
@@ -25,30 +34,34 @@ def groupImageLabel(entries):
     for entry in entries:
         if entry.is_file():
             if entry.name.find('cyl') != -1:
-                imgLabel = 'cyl'
+                imgLabel = 1
             
             if entry.name.find('inter') != -1:
-                imgLabel = 'inter'
+                imgLabel = 2
             
             if entry.name.find('para') != -1:
-                imgLabel = 'para'
+                imgLabel = 3
             
             if entry.name.find('super') != -1:
-                imgLabel = 'super'
+                imgLabel = 4
 
             if entry.name.find('let') != -1:
-                imgLabel = 'let'
+                imgLabel = 5
 
             if entry.name.find('mod') != -1:
-                imgLabel = 'mod'
+                imgLabel = 6
 
             if entry.name.find('svar') != -1:
-                imgLabel = 'svar'
+                imgLabel = 7
     
             processImageFeatures(entry, imgLabel)
+    
+    print('Completed Processing List')
+    print(featuresListCsv)
+    np.savetxt('./features.csv', featuresListCsv, delimiter=',')
+    print('Done!')
 
-def processImageFeatures(entry, imgLabel):
-    features =[]
+def processImageFeatures(entry, imgLabel: int):
     try:
         print('Image Label - %s', imgLabel)
 
@@ -60,8 +73,6 @@ def processImageFeatures(entry, imgLabel):
 
         # Histogram calculation for each individual image
         histogramResult = histogram(singleSpectrumSegmentedImage)
-        # print(histogramResult)
-        # print(len(bins2))
 
         # Histogram calculation for each individual image
         openResult = opening(singleSpectrumSegmentedImage, histogramResult)
@@ -87,11 +98,16 @@ def processImageFeatures(entry, imgLabel):
         labelFeature5 = imgLabel
         print('labelFeature5 %d', labelFeature5)
 
+        # Add features to list for each image
+        # featuresListCsv.append(Features(entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5))
+        addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5])
+        # featuresList = np.append(featuresList, addFeatureToList)
+        featuresListCsv.append(addFeatureToList)
+
     except Exception as e:
         print('Error %s', e)
         traceback.print_exc()
         return e
-    return features
 
 # Process files in directory as a batch
 def process_batch(input):
