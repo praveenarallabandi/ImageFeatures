@@ -49,7 +49,9 @@ def groupImageLabel(entries):
     
     # Save features to CSV
     np.savetxt(conf["CSV_FILE"], featuresListCsv, delimiter=',')
-    print('KNN!')
+    print('----------Processing Features - completed-----------')
+    print('Results saved to featue.csv file')
+    print('--------------------KNN Started---------------------')
     knn()
 
 def knn():
@@ -58,14 +60,14 @@ def knn():
         print(conf["K_MAX_BOUND"])
         featuresDataSet = np.loadtxt(conf["CSV_FILE"], delimiter=",")
         # print(featuresDataSet)
-        scores = []
         K = int(conf["K_MAX_BOUND"]) 
-        totalAverage = 0
         for k in range(1, K + 1):
             print("Running Experiment k = {0}".format(k))
             # 10 fold cross validation
             folds = crossValidationSplit(featuresDataSet, conf["FOLDS"])
-            # print(folds)
+            scores = []
+            avgAccuracy = 0.0
+            totalAverageAccuracy = 0.0
 
             for index,fold in enumerate(folds):
                 test_dataset = fold
@@ -75,19 +77,19 @@ def knn():
                 actualClassColumn = np.size(test_dataset,1) - 1
                 actual = test_dataset[:,actualClassColumn]
                 predicted = kNearestNeighbors(train_dataset, test_dataset, k)
+                print('Actual : {0} - Predicted : {1}'.format(actual, predicted))
                 accuracy = getAccuracy(actual, predicted)
                 scores.append(accuracy)
-
+                avgAccuracy = sum(scores) / float(len(scores));
+            
+            totalAverageAccuracy += avgAccuracy
             print('Scores - {0}'.format(scores))
             print('Mean Accuracy - {0}'.format(accuracy))
         
-        averageOfScores = sum(scores) / len(scores)
-        totalAverage += averageOfScores
-
-        finalTotalAvg = totalAverage / K
+        finalTotalAvg = totalAverageAccuracy / K
                 
         print('Final Total Avg {0}'.format(finalTotalAvg))
-        print('******END**********')
+        print('************END**********')
         
     except Exception as e:
         print('Error %s', e)
@@ -154,7 +156,7 @@ def process_batch(input):
 
 def main():
     print('----------IMAGE ANALYSIS START-------------------')
-    print('Processing.......Results will be displayed after completion.....')
+    print('Processing Features...........')
     global conf
     conf = toml.load('./config.toml')
 

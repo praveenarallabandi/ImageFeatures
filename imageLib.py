@@ -130,23 +130,14 @@ def dilate(image: np.array, window: int = 1) -> np.array:
 
 def opening(image: np.array, histogram: np.array) -> np.array:
     imageThresholding = histogramThresholding(image, histogram)
-    print('SegmentedImage - HistThresholding')
     eroded = erode(imageThresholding, 3)
-    print('Erode - HistThresholding')
-    print(erode)
     opened = dilate(eroded, 1)
-    print('Dilate - HistThresholding')
-
     return opened
 
 def area(image: np.array) -> int:
-
     unique, counts = np.unique(image, return_counts=True)
     counter = dict(zip(unique, counts))
-
     blackPixels = counter[0]
-    print('unique %s counts %s', unique, counts)
-    print('blackPixels %s', blackPixels)
     return blackPixels
 
 def entropy(image: np.array, hist: np.array) -> int:
