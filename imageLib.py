@@ -12,15 +12,6 @@ from random import randrange
 from math import sqrt
 
 def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
-    """Get the image based on R, G or B specturm
-
-    Args:
-        image ([type]): original image
-        colorSpectrum ([type]): color specturm
-
-    Returns:
-        [type]: image for single color spectrum
-    """
     if(image.ndim == 3):
         if(colorSpectrum == 'R') :
             img = image[:, :, 0]
@@ -36,26 +27,12 @@ def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
         return image
 
 def histogram(image: np.array) -> np.array:
-    """Calculate histogram for specified image
-
-    Args:
-        image (np.array): input image
-        bins ([type]): number of bins
-
-    Returns:
-        np.array: calculated histogram value
-    """
-
     hist: np.array = np.zeros(256)
-
     imageSize: int = len(image)
-
     for pixel_value in range(256):
         for i in range(imageSize):
-
             if image.flat[i] == pixel_value:
                 hist[pixel_value] += 1
-
     return hist
 
 def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
@@ -179,48 +156,34 @@ def entropy(image: np.array, hist: np.array) -> int:
     return entropy
 
 
-def calculateBoundRadius(segmented_img: np.array) -> float:
-
-    center = np.array((0.0, 0.0))  # Fake init radius
-
-    radius = 0.0001  # Fake init radius
+def calculateBoundRadius(image: np.array) -> float:
+    center = np.array((0.0, 0.0))
+    radius = 0.0001
 
     for _ in range(2):
-        for pos, x in np.ndenumerate(segmented_img):
-
-            arr_pos = np.array(pos)
-
+        for pos, x in np.ndenumerate(image):
+            arrayAtPosition = np.array(pos)
             if x != 0:
                 continue
-
-            diff = arr_pos - center
+            diff = arrayAtPosition - center
             dist = np.sqrt(np.sum(diff ** 2))
-
             if dist < radius:
                 continue
-
             alpha = dist / radius
-            alphaSq = alpha ** 2
-
             radius = 0.5 * (alpha + 1.0 / alpha) * radius
+            center = 0.5 * ((1.0 + 1.0 / (alpha ** 2)) * center + (1.0 - 1.0 / (alpha ** 2)) * arrayAtPosition)
 
-            center = 0.5 * (
-                (1.0 + 1.0 / alphaSq) * center + (1.0 - 1.0 / alphaSq) * arr_pos
-            )
-
-    for idx, _ in np.ndenumerate(segmented_img):
-
-        arr_pos = np.array(idx)
-
-        diff = arr_pos - center
+    for index, _ in np.ndenumerate(image):
+        arrayAtPosition = np.array(index)
+        diff = arrayAtPosition - center
         dist = np.sqrt(np.sum(diff ** 2))
 
         if dist < radius:
             break
 
         radius = (radius + dist) / 2.0
-        center += (dist - radius) / dist * np.subtract(arr_pos, center)
-
+        center += (dist - radius) / dist * np.subtract(arrayAtPosition, center)
+    
     return radius
 
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
@@ -248,18 +211,13 @@ def euclideanDistance(row1: np.array, row2: np.array) -> float:
 def getNeighbors(train: np.array, test_row: np.array, K: int) -> np.array:
     distances = [(train_row, euclideanDistance(test_row, train_row)) for train_row in train]
     distances.sort(key=lambda tup: tup[1])
-
     neighbors = np.array([distances[i][0] for i in range(K)])
-
     return neighbors
 
 def makePrediction(train: np.array, test_row: np.array, K: int = 3) -> np.array:
-    neighbors = getNeighbors(train, test_row, K)
-
-    outputValues = [row[-1] for row in neighbors]
-
+    neighborsResult = getNeighbors(train, test_row, K)
+    outputValues = [eachRow[-1] for eachRow in neighborsResult]
     prediction = max(set(outputValues), key=outputValues.count)
-
     return prediction
 
 def kNearestNeighbors(train: np.array, test: np.array, K: int) -> np.array:
