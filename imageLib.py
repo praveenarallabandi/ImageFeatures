@@ -2,6 +2,7 @@
 from ImageAnalysisPart1 import convertToSingleColorSpectrum
 import os
 import toml
+import math
 import numpy as np  
 import numba as nb
 from operator import eq
@@ -12,6 +13,7 @@ import os
 from colorama import Fore, Style
 from PIL import Image # Used only for importing and exporting images
 from random import randrange
+from math import sqrt
 
 def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     """Get the image based on R, G or B specturm
@@ -206,13 +208,11 @@ def area(image: np.array) -> int:
     return blackPixels
 
 def entropy(image: np.array, hist: np.array) -> int:
-
-    marg = hist / image.size
-    marg = np.array(list(filter(lambda p: p > 0, marg)))
-
-    entropy = -np.sum(np.multiply(marg, np.log2(marg)))
-
+    length = sum(hist)
+    probability = [float(h) / length for h in hist]
+    entropy = -sum([p * math.log(p, 2) for p in probability if p != 0])
     return entropy
+
 
 def calculateBoundRadius(segmented_img: np.array) -> float:
 
@@ -225,10 +225,9 @@ def calculateBoundRadius(segmented_img: np.array) -> float:
 
             arr_pos = np.array(pos)
 
-            if x != 0:  # Only was pixels a part of the object
+            if x != 0:
                 continue
 
-            # dist = distance(arr_pos, center) # Doesn't work because numba is stupid
             diff = arr_pos - center
             dist = np.sqrt(np.sum(diff ** 2))
 
@@ -262,8 +261,8 @@ def calculateBoundRadius(segmented_img: np.array) -> float:
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     resultFoldDataSet = []
     copyFeatureDataSet = featureDataSet.copy()
-    fold_size = len(featureDataSet) // n_folds
-    for _ in range(n_folds):
+    fold_size = int(len(featureDataSet)) // n_folds
+    for ind in range(n_folds):
         fold = []
 
         while len(fold) < fold_size:
@@ -276,7 +275,10 @@ def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     return np.array(resultFoldDataSet)
 
 def euclideanDistance(row1: np.array, row2: np.array) -> float:
-    return np.linalg.norm(np.subtract(row1, row2))
+    distance = 0.0
+    for i in range(len(row1)-1):
+	    distance += (row1[i] - row2[i])**2
+    return sqrt(distance)
 
 def getNeighbors(train: np.array, test_row: np.array, K: int) -> np.array:
     distances = [(train_row, euclideanDistance(test_row, train_row)) for train_row in train]
@@ -289,9 +291,9 @@ def getNeighbors(train: np.array, test_row: np.array, K: int) -> np.array:
 def makePrediction(train: np.array, test_row: np.array, K: int = 3) -> np.array:
     neighbors = getNeighbors(train, test_row, K)
 
-    output_values = [row[-1] for row in neighbors]
+    outputValues = [row[-1] for row in neighbors]
 
-    prediction = max(set(output_values), key=output_values.count)
+    prediction = max(set(outputValues), key=outputValues.count)
 
     return prediction
 
@@ -299,6 +301,9 @@ def kNearestNeighbors(train: np.array, test: np.array, K: int) -> np.array:
     return np.array([makePrediction(train, row, K) for row in test])
 
 def getAccuracy(actual, predicted):
-    correct = list(map(eq, actual, predicted))
-    return (sum(correct) / len(correct)) * 100.0
+    correct = 0
+    for i in range(len(actual)):
+	    if actual[i] == predicted[i]:
+		    correct += 1
+    return correct / float(len(actual)) * 100.0
     

@@ -54,11 +54,11 @@ def groupImageLabel(entries):
             if entry.name.find('svar') != -1:
                 imgLabel = 7
     
-            # processImageFeatures(entry, imgLabel)
+            processImageFeatures(entry, imgLabel)
     
-    """ print('Completed Processing List')
+    print('Completed Processing List')
     print(featuresListCsv)
-    np.savetxt(conf["CSV_FILE"], featuresListCsv, delimiter=',') """
+    np.savetxt(conf["CSV_FILE"], featuresListCsv, delimiter=',')
     print('KNN!')
     knn()
 
@@ -120,7 +120,10 @@ def processImageFeatures(entry, imgLabel: int):
         segmentedImage = np.asarray(Image.open(conf["INPUT_DIR"] + entry.name))
 
         # Converting color images to selected single color spectrum
-        singleSpectrumSegmentedImage = getSingleChannel(segmentedImage, conf["COLOR_CHANNEL"])
+        if(segmentedImage.ndim == 3):
+            singleSpectrumSegmentedImage = getSingleChannel(segmentedImage, conf["COLOR_CHANNEL"])
+        else:
+            singleSpectrumSegmentedImage = segmentedImage.copy()
 
         # Histogram calculation for each individual image
         histogramResult = histogram(singleSpectrumSegmentedImage)
