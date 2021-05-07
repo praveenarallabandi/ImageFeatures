@@ -1,15 +1,11 @@
 # imports
 from ImageAnalysisPart1 import convertToSingleColorSpectrum
-import os
-import toml
 import math
 import numpy as np  
 import numba as nb
 from operator import eq
 from typing import List
 import matplotlib.pyplot as plt
-import time
-import os
 from colorama import Fore, Style
 from PIL import Image # Used only for importing and exporting images
 from random import randrange
@@ -25,16 +21,19 @@ def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     Returns:
         [type]: image for single color spectrum
     """
-    if(colorSpectrum == 'R') :
-        img = image[:, :, 0]
-        
-    if(colorSpectrum == 'G') :
-        img = image[:, :, 1]
+    if(image.ndim == 3):
+        if(colorSpectrum == 'R') :
+            img = image[:, :, 0]
+            
+        if(colorSpectrum == 'G') :
+            img = image[:, :, 1]
 
-    if(colorSpectrum == 'B') :
-        img = image[:, :, 2]
+        if(colorSpectrum == 'B') :
+            img = image[:, :, 2]
 
-    return img
+        return img
+    else:
+        return image
 
 def histogram(image: np.array) -> np.array:
     """Calculate histogram for specified image
@@ -46,13 +45,7 @@ def histogram(image: np.array) -> np.array:
     Returns:
         np.array: calculated histogram value
     """
-    """ maxval = 255.0
-    bins = np.linspace(0.0, maxval, 257)
-    flatImage = image.flatten()
-    vals = np.mean(flatImage, axis=0)
-    # bins are defaulted to image.max and image.min values
-    hist, bins2 = np.histogram(vals, bins, density=True)
-    return hist, bins2 """
+
     hist: np.array = np.zeros(256)
 
     imageSize: int = len(image)
@@ -68,10 +61,8 @@ def histogram(image: np.array) -> np.array:
 def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
 
     bins = len(hist)
-    # print(bins)
     histogramStart = 0
     while hist[histogramStart] < min_count:
-        print('hist[histogramStart] : %s histogramStart : %s', hist[histogramStart], histogramStart)
         histogramStart += 1
 
     histogramEnd = bins - 1
@@ -79,8 +70,6 @@ def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
         histogramEnd -= 1
 
     maxVal = 255.0
-    print('Maxval: %s', maxVal)
-
     histogramCenter = int(round(np.average(np.linspace(0, maxVal, bins), weights=hist)))
     left = np.sum(hist[histogramStart:histogramCenter])
     right = np.sum(hist[histogramCenter : histogramEnd + 1])
@@ -106,44 +95,24 @@ def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
     return histogramCenter
 
 def histogramThresholding(image: np.array, hist: np.array) -> np.array:
-
     if hist.any() == None:
         hist = histogram(image)
+
     middle = findMiddleHist(hist)
-    print('middle %s', middle)
     imageCopy = image.copy()
     imageCopy[imageCopy > middle] = 255
     imageCopy[imageCopy < middle] = 0
-
     imageCopy = imageCopy.astype(np.uint8)
-
     return imageCopy.reshape(image.shape)
 
+def convert_binary(image_src, thresh_val):
+    color_1 = 255
+    color_2 = 0
+    initial_conv = np.where((image_src <= thresh_val), image_src, color_1)
+    final_conv = np.where((initial_conv > thresh_val), initial_conv, color_2)
+    return final_conv
+
 def erode(image: np.array, erosion_level: int = 3) -> np.array:
-
-    """ structuring_kernel = np.full(shape=(erosion_level, erosion_level), fill_value=255)
-    # image_src = binarize_this(image_file=image_file)
-
-    orig_shape = image_src.shape
-    pad_width = erosion_level - 2
-    print('padwidth %d', pad_width)
-    print('image_src %d', image_src.shape)
-    # pad the matrix with `pad_width`
-    image_pad = np.pad(image_src, (pad_width, pad_width), mode='constant')
-    pimg_shape = image_pad.shape
-    h_reduce, w_reduce = (pimg_shape[0] - orig_shape[0]), (pimg_shape[1] - orig_shape[1])
-
-    # sub matrices of kernel size
-    flat_submatrices = np.array([
-        image_pad[i:(i + erosion_level), j:(j + erosion_level)]
-        for i in range(pimg_shape[0] - h_reduce) for j in range(pimg_shape[1] - w_reduce)
-    ])
-
-    # condition to replace the values - if the kernel equal to submatrix then 255 else 0
-    image_erode = np.array([255 if (i == structuring_kernel).all() else 0 for i in flat_submatrices])
-    image_erode = image_erode.reshape(orig_shape)
-
-    return image_erode """
     r = np.zeros_like(image)
     [yy, xx] = np.where(image > 0)
 
@@ -152,24 +121,20 @@ def erode(image: np.array, erosion_level: int = 3) -> np.array:
     x_off = off.flatten()
     y_off = off.T.flatten()
 
-    # duplicate each neighborhood element for each index
     n = len(xx.flatten())
     x_off = np.tile(x_off, (n, 1)).flatten()
     y_off = np.tile(y_off, (n, 1)).flatten()
 
-    # round out offset
     ind = np.sqrt(x_off ** 2 + y_off ** 2) > erosion_level
     x_off[ind] = 0
     y_off[ind] = 0
 
-    # duplicate each index for each neighborhood element
     xx = np.tile(xx, ((2 * erosion_level + 1) ** 2))
     yy = np.tile(yy, ((2 * erosion_level + 1) ** 2))
 
     nx = xx + x_off
     ny = yy + y_off
 
-    # bounds checking
     ny[ny < 0] = 0
     ny[ny > image.shape[0] - 1] = image.shape[0] - 1
     nx[nx < 0] = 0

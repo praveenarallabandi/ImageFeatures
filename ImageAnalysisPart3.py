@@ -32,7 +32,7 @@ def groupImageLabel(entries):
     imgLabel = ""
 
     for entry in entries:
-        if entry.is_file():
+        if entry.is_file() and entry.name != '.DS_Store':
             if entry.name.find('cyl') != -1:
                 imgLabel = 1
             
@@ -118,12 +118,8 @@ def processImageFeatures(entry, imgLabel: int):
 
         # Get image details
         segmentedImage = np.asarray(Image.open(conf["INPUT_DIR"] + entry.name))
-
-        # Converting color images to selected single color spectrum
-        if(segmentedImage.ndim == 3):
-            singleSpectrumSegmentedImage = getSingleChannel(segmentedImage, conf["COLOR_CHANNEL"])
-        else:
-            singleSpectrumSegmentedImage = segmentedImage.copy()
+        
+        singleSpectrumSegmentedImage = getSingleChannel(segmentedImage, conf["COLOR_CHANNEL"])
 
         # Histogram calculation for each individual image
         histogramResult = histogram(singleSpectrumSegmentedImage)
