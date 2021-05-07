@@ -178,13 +178,22 @@ def calculateBoundRadius(image: np.array) -> float:
     return radius
 
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
+    """10 fold crossvalidation
+
+    Args:
+        featureDataSet (np.array): [description]
+        n_folds (int): folds from config.toml
+
+    Returns:
+        np.array: result array dataset
+    """
     resultFoldDataSet = []
     copyFeatureDataSet = featureDataSet.copy()
-    fold_size = int(len(featureDataSet)) // n_folds
+    foldSize = int(len(featureDataSet)) // n_folds
     for ind in range(n_folds):
         fold = []
 
-        while len(fold) < fold_size:
+        while len(fold) < foldSize:
             index = randrange(len(copyFeatureDataSet))
             fold.append(copyFeatureDataSet[index])
             copyFeatureDataSet = np.delete(copyFeatureDataSet, index, axis=0)
@@ -215,9 +224,5 @@ def kNearestNeighbors(train: np.array, test: np.array, K: int) -> np.array:
     return np.array([makePrediction(train, row, K) for row in test])
 
 def getAccuracy(actual, predicted):
-    correct = 0
-    for i in range(len(actual)):
-	    if actual[i] == predicted[i]:
-		    correct += 1
-    return correct / float(len(actual)) * 100.0
-    
+    correct = list(map(eq, actual, predicted))
+    return (sum(correct) / len(correct)) * 100.0
