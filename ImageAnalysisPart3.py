@@ -12,19 +12,10 @@ from colorama import Fore, Style
 from PIL import Image # Used only for importing and exporting images
 from imageLib import *
 
-# featuresList = np.array([])
 featuresListCsv = []
 
-class Features:
-    def __init__(self, entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5) -> None:
-        self.entropyResultFeature1 = entropyResultFeature1
-        self.areaCalculatedFeature2 = areaCalculatedFeature2
-        self.histogramMeanFeature3 = histogramMeanFeature3
-        self.boundRadiusFeature4 = boundRadiusFeature4
-        self.labelFeature5 = labelFeature5
-
 def groupImageLabel(entries):
-    """Group images into class based on their name
+    """GClassify images based in their name
 
     Args:
         entries ([type]): Batch files in directory
@@ -56,8 +47,7 @@ def groupImageLabel(entries):
     
             processImageFeatures(entry, imgLabel)
     
-    print('Completed Processing List')
-    print(featuresListCsv)
+    # Save features to CSV
     np.savetxt(conf["CSV_FILE"], featuresListCsv, delimiter=',')
     print('KNN!')
     knn()
@@ -82,11 +72,10 @@ def knn():
                 copy_folds = np.copy(folds)
                 train_dataset = np.concatenate(np.delete(copy_folds, index, axis=0), axis = 0)
                 
-                actual_class_column = np.size(test_dataset,1) - 1
-                actual = test_dataset[:,actual_class_column]
-                # actual = [row[-1] for row in fold]
-                prediction = kNearestNeighbors(train_dataset, test_dataset, k)
-                accuracy = getAccuracy(actual, prediction)
+                actualClassColumn = np.size(test_dataset,1) - 1
+                actual = test_dataset[:,actualClassColumn]
+                predicted = kNearestNeighbors(train_dataset, test_dataset, k)
+                accuracy = getAccuracy(actual, predicted)
                 scores.append(accuracy)
 
             print('Scores - {0}'.format(scores))
@@ -140,7 +129,7 @@ def processImageFeatures(entry, imgLabel: int):
         histogramMeanFeature3 = np.mean(histogramResult)
         print('histogramMeanFeature3 %d', histogramMeanFeature3)
 
-        # Feature 4 - Calcualte bound radius
+        # Feature 4 - Calculate radius
         boundRadiusFeature4 = calculateBoundRadius(openResult)
         print('boundRadiusFeature4 %d', boundRadiusFeature4)
 

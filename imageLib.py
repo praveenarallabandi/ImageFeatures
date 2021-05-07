@@ -160,7 +160,7 @@ def calculateBoundRadius(image: np.array) -> float:
     center = np.array((0.0, 0.0))
     radius = 0.0001
 
-    for _ in range(2):
+    for r in range(2):
         for pos, x in np.ndenumerate(image):
             arrayAtPosition = np.array(pos)
             if x != 0:
@@ -173,7 +173,7 @@ def calculateBoundRadius(image: np.array) -> float:
             radius = 0.5 * (alpha + 1.0 / alpha) * radius
             center = 0.5 * ((1.0 + 1.0 / (alpha ** 2)) * center + (1.0 - 1.0 / (alpha ** 2)) * arrayAtPosition)
 
-    for index, _ in np.ndenumerate(image):
+    for index, val in np.ndenumerate(image):
         arrayAtPosition = np.array(index)
         diff = arrayAtPosition - center
         dist = np.sqrt(np.sum(diff ** 2))
