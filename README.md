@@ -4,9 +4,8 @@
 
 * Take cell images as input. 
 * Run the operations on each image
-    * Grey Scaling Salt and Pepper Noise, Gaussian Noise, Linear Filtering, Median Filtering, Histogram Calculations, Histogram Equalization, Image Quantization, and Mean Squared Error). 
-* All of these operations output a new image for each image in the batch. 
-* A TOML file for configuration of attributes like noise and the weights for filters.
+    * Created segmented image with  
+* A TOML file for configuration of attributes input, output, k-bound and number of folds
 
 ## Usage
 

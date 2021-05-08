@@ -70,9 +70,12 @@ def groupImageClass(entries):
     
     # Save features to CSV
     normalizeRes = normalize(np.array(featuresListCsv))
-    np.savetxt(conf["CSV_FILE"], np.array(normalizeRes), delimiter=',')
+    if not os.path.exists(conf["OUTPUT_DIR"]):
+        os.makedirs(conf["OUTPUT_DIR"])
+    outPath = conf["OUTPUT_DIR"] + conf["CSV_FILE"]
+    np.savetxt(outPath, np.array(normalizeRes), delimiter=',')
     print('----------Processing Features - completed-----------')
-    print('Results saved to featue.csv file')
+    print(f"Results saved to {Fore.CYAN}{outPath}{Style.RESET_ALL} file")
     print('--------------------KNN Started---------------------')
     knn()
 
@@ -82,8 +85,9 @@ def knn():
         # print(featuresDataSet)
         K = int(conf["K_MAX_BOUND"]) 
         totalAverageAccuracy = 0.0
+        print(f"Running Experiment....")
         for k in range(1, K + 1):
-            print(f"Running Experiment {Fore.CYAN}k = {k}{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}k = {k}{Style.RESET_ALL}")
             # 10 fold cross validation
             folds = crossValidationSplit(featuresDataSet, conf["FOLDS"])
             scores = []
@@ -107,8 +111,8 @@ def knn():
         
         finalTotalAvg = totalAverageAccuracy / K
                 
-        print(f"{Fore.GREEN}Final Average Accuracy : {finalTotalAvg:.3f}%{Style.RESET_ALL}")
-        print('************END**********')
+        print(f"\n{Fore.GREEN}Final Average Accuracy : {finalTotalAvg:.3f}%{Style.RESET_ALL}")
+        print('************************ END ***********************')
         
     except Exception as e:
         print('Error %s', e)
@@ -124,7 +128,7 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         entries ([type]): Batch files in directory
     """
     try:
-        print(f"Processing Image: {Fore.RED}{entry.name}{Style.RESET_ALL}")
+        print(f"{Fore.MAGENTA}Processing Image: {entry.name}{Style.RESET_ALL}")
 
         # Get image details
         image = np.asarray(Image.open(conf["INPUT_DIR"] + entry.name))
@@ -173,8 +177,8 @@ def process_batch(input):
         groupImageClass(entries)
 
 def main():
-    print('----------IMAGE ANALYSIS START-------------------')
-    print('Processing Features...........')
+    print('************************ IMAGE ANALYSIS START ***********************')
+    print(f"{Fore.WHITE}Processing Feature Generation...........{Style.RESET_ALL}")
     global conf
     conf = toml.load('./config.toml')
 
