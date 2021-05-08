@@ -26,6 +26,7 @@ def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     else:
         return image
 
+# Image segmentation
 def histogram(image: np.array) -> np.array:
     hist: np.array = np.zeros(256)
     imageSize: int = len(image)
@@ -36,7 +37,6 @@ def histogram(image: np.array) -> np.array:
     return hist
 
 def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
-
     bins = len(hist)
     histogramStart = 0
     while hist[histogramStart] < min_count:
@@ -82,65 +82,77 @@ def histogramThresholding(image: np.array, hist: np.array) -> np.array:
     imageCopy = imageCopy.astype(np.uint8)
     return imageCopy.reshape(image.shape)
 
-def convert_binary(image_src, thresh_val):
-    color_1 = 255
-    color_2 = 0
-    initial_conv = np.where((image_src <= thresh_val), image_src, color_1)
-    final_conv = np.where((initial_conv > thresh_val), initial_conv, color_2)
-    return final_conv
-
-def erode(image: np.array, erosion_level: int = 3) -> np.array:
-    r = np.zeros_like(image)
-    [yy, xx] = np.where(image > 0)
+def erosion(image: np.array, erosion_level: int = 3) -> np.array:
+    initArray = np.zeros_like(image)
+    [y, x] = np.where(image > 0)
 
     # prepare neighborhoods
     off = np.tile(range(-erosion_level, erosion_level + 1), (2 * erosion_level + 1, 1))
-    x_off = off.flatten()
-    y_off = off.T.flatten()
+    x_offset = off.flatten()
+    y_offset = off.T.flatten()
 
-    n = len(xx.flatten())
-    x_off = np.tile(x_off, (n, 1)).flatten()
-    y_off = np.tile(y_off, (n, 1)).flatten()
+    n = len(x.flatten())
+    x_offset = np.tile(x_offset, (n, 1)).flatten()
+    y_offset = np.tile(y_offset, (n, 1)).flatten()
 
-    ind = np.sqrt(x_off ** 2 + y_off ** 2) > erosion_level
-    x_off[ind] = 0
-    y_off[ind] = 0
+    index = np.sqrt(x_offset ** 2 + y_offset ** 2) > erosion_level
+    x_offset[index] = 0
+    y_offset[index] = 0
 
-    xx = np.tile(xx, ((2 * erosion_level + 1) ** 2))
-    yy = np.tile(yy, ((2 * erosion_level + 1) ** 2))
+    reps = ((2 * erosion_level + 1) ** 2)
+    x = np.tile(x, reps)
+    y = np.tile(y, reps)
 
-    nx = xx + x_off
-    ny = yy + y_off
+    new_x = x + x_offset
+    new_y = y + y_offset
 
-    ny[ny < 0] = 0
-    ny[ny > image.shape[0] - 1] = image.shape[0] - 1
-    nx[nx < 0] = 0
-    nx[nx > image.shape[1] - 1] = image.shape[1] - 1
+    new_y[new_y < 0] = 0
+    new_y[new_y > image.shape[0] - 1] = image.shape[0] - 1
+    new_x[new_x < 0] = 0
+    new_x[new_x > image.shape[1] - 1] = image.shape[1] - 1
 
-    r[ny, nx] = 255
-
-    return r.astype(np.uint8)
+    initArray[new_y, new_x] = 255
+    imageErosion = initArray.astype(np.uint8)
+    return imageErosion
 
 def dilate(image: np.array, window: int = 1) -> np.array:
     inverted_img = np.invert(image)
-    eroded_inverse = erode(inverted_img, window).astype(np.uint8)
+    eroded_inverse = erosion(image, window).astype(np.uint8)
     eroded_img = np.invert(eroded_inverse)
 
     return eroded_img
 
 def opening(image: np.array, histogram: np.array) -> np.array:
     imageThresholding = histogramThresholding(image, histogram)
-    eroded = erode(imageThresholding, 3)
+    eroded = erosion(imageThresholding, 3)
     opened = dilate(eroded, 1)
     return opened
 
+# Features
 def area(image: np.array) -> int:
+    """Calculate area
+
+    Args:
+        image (np.array): [description]
+
+    Returns:
+        int: area
+    """
     unique, counts = np.unique(image, return_counts=True)
     counter = dict(zip(unique, counts))
     blackPixels = counter[0]
     return blackPixels
 
 def entropy(image: np.array, hist: np.array) -> int:
+    """Calculate entropy
+
+    Args:
+        image (np.array): [description]
+        hist (np.array): [description]
+
+    Returns:
+        int: entropy
+    """
     length = sum(hist)
     probability = [float(h) / length for h in hist]
     entropy = -sum([p * math.log(p, 2) for p in probability if p != 0])
@@ -150,7 +162,13 @@ def entropy(image: np.array, hist: np.array) -> int:
 def calculateBoundRadius(image: np.array) -> float:
     center = np.array((0.0, 0.0))
     radius = 0.0001
-
+    interior = abs(np.diff(image, axis=0)).sum() + abs(np.diff(image, axis=1)).sum()
+    boundary = image[0,:].sum() + image[:,0].sum() + image[-1,:].sum() + image[:,-1].sum()
+    perimeter = interior + boundary
+    print(f"interior {interior}")
+    print(f"boundary {boundary}")
+    print(f"Perimeter {perimeter}")
+    return perimeter
     for r in range(2):
         for pos, x in np.ndenumerate(image):
             arrayAtPosition = np.array(pos)
@@ -203,26 +221,54 @@ def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     return np.array(resultFoldDataSet)
 
 def euclideanDistance(row1: np.array, row2: np.array) -> float:
+    """Euclidean distance calculation
+
+    Args:
+        row1 (np.array): [description]
+        row2 (np.array): [description]
+
+    Returns:
+        float: euclidean distance
+    """
     distance = 0.0
     for i in range(len(row1)-1):
 	    distance += (row1[i] - row2[i])**2
     return sqrt(distance)
 
-def getNeighbors(train: np.array, test_row: np.array, K: int) -> np.array:
-    distances = [(train_row, euclideanDistance(test_row, train_row)) for train_row in train]
+def getNeighbors(train: np.array, testRow: np.array, K: int) -> np.array:
+    distances = [(train_row, euclideanDistance(testRow, train_row)) for train_row in train]
     distances.sort(key=lambda tup: tup[1])
     neighbors = np.array([distances[i][0] for i in range(K)])
     return neighbors
 
-def makePrediction(train: np.array, test_row: np.array, K: int = 3) -> np.array:
-    neighborsResult = getNeighbors(train, test_row, K)
+def makePrediction(train: np.array, testRow: np.array, K: int = 3) -> np.array:
+    neighborsResult = getNeighbors(train, testRow, K)
     outputValues = [eachRow[-1] for eachRow in neighborsResult]
     prediction = max(set(outputValues), key=outputValues.count)
     return prediction
 
-def kNearestNeighbors(train: np.array, test: np.array, K: int) -> np.array:
-    return np.array([makePrediction(train, row, K) for row in test])
+def kNearestNeighbors(train: np.array, testDataset: np.array, K: int) -> np.array:
+    """KNN
+
+    Args:
+        train (np.array): [description]
+        testDataset (np.array): [description]
+        K (int): [description]
+
+    Returns:
+        np.array: Predicted Array
+    """
+    return np.array([makePrediction(train, row, K) for row in testDataset])
 
 def getAccuracy(actual, predicted):
+    """Calculate accuracy
+
+    Args:
+        actual ([type]): [description]
+        predicted ([type]): [description]
+
+    Returns:
+        [type]: accuracy
+    """
     correct = list(map(eq, actual, predicted))
     return (sum(correct) / len(correct)) * 100.0

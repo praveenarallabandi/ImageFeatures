@@ -83,7 +83,7 @@ def knn():
         K = int(conf["K_MAX_BOUND"]) 
         totalAverageAccuracy = 0.0
         for k in range(1, K + 1):
-            print("Running Experiment k = {0}".format(k))
+            print(f"Running Experiment {Fore.CYAN}k = {k}{Style.RESET_ALL}")
             # 10 fold cross validation
             folds = crossValidationSplit(featuresDataSet, conf["FOLDS"])
             scores = []
@@ -100,14 +100,14 @@ def knn():
                 accuracy = getAccuracy(actual, predicted)
                 scores.append(accuracy)
                 avgAccuracy = sum(scores) / float(len(scores))
-            print("avgAccuracy {0}".format(avgAccuracy))
+            # print("\tavgAccuracy {0}".format(avgAccuracy))
             totalAverageAccuracy += avgAccuracy
-            print(f"\tScores: {['{:.3f}%'.format(score) for score in scores]}")
-            print(f"\tMean Accuracy: {avgAccuracy:.3f}%")
+            print(f"\t{Fore.YELLOW}Scores: {Style.RESET_ALL}{Fore.BLUE}{['{:.3f}%'.format(score) for score in scores]}{Style.RESET_ALL}")
+            print(f"\t{Fore.YELLOW}Mean Accuracy: {Style.RESET_ALL}{Fore.BLUE}{avgAccuracy:.3f}%{Style.RESET_ALL}")
         
         finalTotalAvg = totalAverageAccuracy / K
                 
-        print(f"Final Average Accuracy : {finalTotalAvg:.3f}%")
+        print(f"{Fore.GREEN}Final Average Accuracy : {finalTotalAvg:.3f}%{Style.RESET_ALL}")
         print('************END**********')
         
     except Exception as e:
@@ -124,7 +124,7 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         entries ([type]): Batch files in directory
     """
     try:
-        print('Processing Image: {0}'.format(entry.name))
+        print(f"Processing Image: {Fore.RED}{entry.name}{Style.RESET_ALL}")
 
         # Get image details
         image = np.asarray(Image.open(conf["INPUT_DIR"] + entry.name))
@@ -144,7 +144,7 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         areaCalculatedFeature2 = area(openingResult)
         print('areaCalculatedFeature2: {0}'.format(areaCalculatedFeature2))
 
-        # Feature 3 - Calculate Mean
+        # Feature 3 - Calculate Histogram Mean
         histogramMeanFeature3 = np.mean(histogramResult)
         print('histogramMeanFeature3: {0}'.format(histogramMeanFeature3))
 
@@ -152,15 +152,14 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         boundRadiusFeature4 = calculateBoundRadius(openingResult)
         print('boundRadiusFeature4: {0}'.format(boundRadiusFeature4))
 
-        # Feature 5 - Last column label name
-        labelFeature5 = imgLabel
-        print('labelFeature5: {0} - {1}'.format(labelFeature5, classLabelName))
+        # Last column label name
+        print('label: {0} - {1}'.format(imgLabel, classLabelName))
 
         # Add features to list for each image
-        addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, labelFeature5])
+        addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, imgLabel])
         featuresListCsv.append(addFeatureToList)
 
-        print('Processing Image: {0} - Done!'.format(entry.name))
+        print(f"{Fore.CYAN}Processing Image: {entry.name} - Done!{Style.RESET_ALL}")
 
     except Exception as e:
         print('Error %s', e)
