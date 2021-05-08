@@ -26,7 +26,6 @@ def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     else:
         return image
 
-# Image segmentation
 def histogram(image: np.array) -> np.array:
     hist: np.array = np.zeros(256)
     imageSize: int = len(image)
@@ -86,7 +85,6 @@ def erosion(image: np.array, erosion_level: int = 3) -> np.array:
     initArray = np.zeros_like(image)
     [y, x] = np.where(image > 0)
 
-    # prepare neighborhoods
     off = np.tile(range(-erosion_level, erosion_level + 1), (2 * erosion_level + 1, 1))
     x_offset = off.flatten()
     y_offset = off.T.flatten()
@@ -106,19 +104,19 @@ def erosion(image: np.array, erosion_level: int = 3) -> np.array:
     new_x = x + x_offset
     new_y = y + y_offset
 
-    new_y[new_y < 0] = 0
-    new_y[new_y > image.shape[0] - 1] = image.shape[0] - 1
     new_x[new_x < 0] = 0
     new_x[new_x > image.shape[1] - 1] = image.shape[1] - 1
+    new_y[new_y < 0] = 0
+    new_y[new_y > image.shape[0] - 1] = image.shape[0] - 1
 
     initArray[new_y, new_x] = 255
     imageErosion = initArray.astype(np.uint8)
     return imageErosion
 
 def dilate(image: np.array, window: int = 1) -> np.array:
-    inverted_img = np.invert(image)
-    eroded_inverse = erosion(image, window).astype(np.uint8)
-    eroded_img = np.invert(eroded_inverse)
+    invertImage = np.invert(image)
+    erodedImage = erosion(invertImage, window).astype(np.uint8)
+    eroded_img = np.invert(erodedImage)
 
     return eroded_img
 
@@ -159,16 +157,14 @@ def entropy(image: np.array, hist: np.array) -> int:
     return entropy
 
 
-def calculateBoundRadius(image: np.array) -> float:
-    center = np.array((0.0, 0.0))
-    radius = 0.0001
+def calculatePerimeter(image: np.array) -> float:
     interior = abs(np.diff(image, axis=0)).sum() + abs(np.diff(image, axis=1)).sum()
     boundary = image[0,:].sum() + image[:,0].sum() + image[-1,:].sum() + image[:,-1].sum()
     perimeter = interior + boundary
-    print(f"interior {interior}")
-    print(f"boundary {boundary}")
-    print(f"Perimeter {perimeter}")
     return perimeter
+    """ 
+    center = np.array((0.0, 0.0))
+    radius = 0.0001
     for r in range(2):
         for pos, x in np.ndenumerate(image):
             arrayAtPosition = np.array(pos)
@@ -193,7 +189,7 @@ def calculateBoundRadius(image: np.array) -> float:
         radius = (radius + dist) / 2.0
         center += (dist - radius) / dist * np.subtract(arrayAtPosition, center)
     
-    return radius
+    return radius """
 
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     """10 fold crossvalidation

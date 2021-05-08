@@ -148,15 +148,15 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         histogramMeanFeature3 = np.mean(histogramResult)
         print('histogramMeanFeature3: {0}'.format(histogramMeanFeature3))
 
-        # Feature 4 - Calculate radius
-        boundRadiusFeature4 = calculateBoundRadius(openingResult)
-        print('boundRadiusFeature4: {0}'.format(boundRadiusFeature4))
+        # Feature 4 - Calculate permimeter
+        perimeterFeature4 = calculatePerimeter(openingResult)
+        print('perimeterFeature4: {0}'.format(perimeterFeature4))
 
         # Last column label name
         print('label: {0} - {1}'.format(imgLabel, classLabelName))
 
         # Add features to list for each image
-        addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, boundRadiusFeature4, imgLabel])
+        addFeatureToList = np.array([entropyResultFeature1, areaCalculatedFeature2, histogramMeanFeature3, perimeterFeature4, imgLabel])
         featuresListCsv.append(addFeatureToList)
 
         print(f"{Fore.CYAN}Processing Image: {entry.name} - Done!{Style.RESET_ALL}")
