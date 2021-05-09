@@ -10,6 +10,8 @@ The objective of the program is to classify the images to their cell-appropriate
 * Execute k-nearest neighbor on the loaded dataset with k-fold cross-validation, outputting the accuracy of cross-validation
 * A TOML file for configuration of attributes input, output, k-bound, and number of folds
 
+The operations are performed with ```numpy``` and not used any existing third-party library implementations.
+
 ## Usage
 
 ```
@@ -29,13 +31,18 @@ The feature extracted from images are
 * Histogram Mean - Mean of the histogram on each of the occurrences of each pixel value
 * Perimeter - The perimeter of the image by summation of the interior and external boundaries of the image 
 
-The project implementation is done using Python. Using Python, we can rapidly develop and integrate each operation. Python's NumPy library, which allows for array operations. 
-Certain image array operations are time-consuming, and those scenarios were addressed with optimizing NumPy arrays (using NumPy methods as much as possible) and with numba. Numba is an open-source JIT compiler that translates a subset of Python and NumPy code into fast machine code. Numba has a python function decorator for just-in-time compiling functions to machine code before executing. Using this decorator on functions that use heavy math and looping (i.e., filters and noise) provides significant speed increases with speeds similar to using lower-level compiled languages like C/C++ or Rust. For plotting histograms, Python's `matplotlib,` the relatively standard and robust plotting library, outputs plots to a file with the rest of the exported output images.
+The features are calcuated for each image, data normalized and concatenated with label name as last column and then saved to CSV file
+
+### K-Nearest Neighbour
+The testing is performed with k-fold(default to 10) cross validation. Each of the fold of 10 folds that test dataset is feed through knn for it's predicted labele against the testing protion of the fold. In a nutshell for each test instance
+
+* Compute the diatance consistently of every training instance using ```euclidean distance```
+* select the closest k instances and their frequent labeled class as predicted for the testrow
+* 
 
 ## Dependencies 
 
 * numpy - For Array operations
-* matplotlib - Plot
 * numba - JIT for speed exectuion
 * toml - Configuration settings
 * PIL (Image) - Used only for importing and exporting images
