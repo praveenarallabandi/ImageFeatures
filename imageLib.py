@@ -1,30 +1,32 @@
 # imports
 from ImageAnalysisPart1 import convertToSingleColorSpectrum
 import math
-import numpy as np  
+import numpy as np
 import numba as nb
 from operator import eq
 from typing import List
 import matplotlib.pyplot as plt
 from colorama import Fore, Style
-from PIL import Image # Used only for importing and exporting images
+from PIL import Image  # Used only for importing and exporting images
 from random import randrange
 from math import sqrt
 
+
 def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
     if(image.ndim == 3):
-        if(colorSpectrum == 'R') :
+        if(colorSpectrum == 'R'):
             img = image[:, :, 0]
-            
-        if(colorSpectrum == 'G') :
+
+        if(colorSpectrum == 'G'):
             img = image[:, :, 1]
 
-        if(colorSpectrum == 'B') :
+        if(colorSpectrum == 'B'):
             img = image[:, :, 2]
 
         return img
     else:
         return image
+
 
 def histogram(image: np.array) -> np.array:
     hist: np.array = np.zeros(256)
@@ -35,20 +37,24 @@ def histogram(image: np.array) -> np.array:
                 hist[pixel_value] += 1
     return hist
 
-def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
+def histogramThresholding(image: np.array, hist: np.array) -> np.array:
+    if hist.any() == None:
+        hist = histogram(image)
+
     bins = len(hist)
     histogramStart = 0
-    while hist[histogramStart] < min_count:
+    while hist[histogramStart] < 5:
         histogramStart += 1
 
     histogramEnd = bins - 1
-    while hist[histogramEnd] < min_count:
+    while hist[histogramEnd] < 5:
         histogramEnd -= 1
 
     maxVal = 255.0
-    histogramCenter = int(round(np.average(np.linspace(0, maxVal, bins), weights=hist)))
+    histogramCenter = int(
+        round(np.average(np.linspace(0, maxVal, bins), weights=hist)))
     left = np.sum(hist[histogramStart:histogramCenter])
-    right = np.sum(hist[histogramCenter : histogramEnd + 1])
+    right = np.sum(hist[histogramCenter: histogramEnd + 1])
 
     while histogramStart < histogramEnd:
         if left > right:
@@ -68,41 +74,35 @@ def findMiddleHist(hist: np.array, min_count: int = 5) -> int:
 
         histogramCenter = calculatedCenter
 
-    return histogramCenter
-
-def histogramThresholding(image: np.array, hist: np.array) -> np.array:
-    if hist.any() == None:
-        hist = histogram(image)
-
-    middle = findMiddleHist(hist)
     imageCopy = image.copy()
-    imageCopy[imageCopy > middle] = 255
-    imageCopy[imageCopy < middle] = 0
+    imageCopy[imageCopy > histogramCenter] = 255
+    imageCopy[imageCopy < histogramCenter] = 0
     imageCopy = imageCopy.astype(np.uint8)
     return imageCopy.reshape(image.shape)
 
-def erosion(image: np.array, erosion_level: int = 3) -> np.array:
+
+def erosion(image: np.array, erosionLevel: int = 3) -> np.array:
     initArray = np.zeros_like(image)
     [y, x] = np.where(image > 0)
 
-    off = np.tile(range(-erosion_level, erosion_level + 1), (2 * erosion_level + 1, 1))
-    x_offset = off.flatten()
-    y_offset = off.T.flatten()
+    tileArray = np.tile(range(-erosionLevel, erosionLevel + 1), (2 * erosionLevel + 1, 1))
+    xTileArray = tileArray.flatten()
+    yTileArray = tileArray.T.flatten()
 
     n = len(x.flatten())
-    x_offset = np.tile(x_offset, (n, 1)).flatten()
-    y_offset = np.tile(y_offset, (n, 1)).flatten()
+    xTileArray = np.tile(xTileArray, (n, 1)).flatten()
+    yTileArray = np.tile(yTileArray, (n, 1)).flatten()
 
-    index = np.sqrt(x_offset ** 2 + y_offset ** 2) > erosion_level
-    x_offset[index] = 0
-    y_offset[index] = 0
+    index = np.sqrt(xTileArray ** 2 + yTileArray ** 2) > erosionLevel
+    xTileArray[index] = 0
+    yTileArray[index] = 0
 
-    reps = ((2 * erosion_level + 1) ** 2)
+    reps = ((2 * erosionLevel + 1) ** 2)
     x = np.tile(x, reps)
     y = np.tile(y, reps)
 
-    new_x = x + x_offset
-    new_y = y + y_offset
+    new_x = x + xTileArray
+    new_y = y + yTileArray
 
     new_x[new_x < 0] = 0
     new_x[new_x > image.shape[1] - 1] = image.shape[1] - 1
@@ -120,6 +120,7 @@ def dilate(image: np.array, window: int = 1) -> np.array:
 
     return eroded_img
 
+
 def opening(image: np.array, histogram: np.array) -> np.array:
     imageThresholding = histogramThresholding(image, histogram)
     eroded = erosion(imageThresholding, 3)
@@ -127,6 +128,8 @@ def opening(image: np.array, histogram: np.array) -> np.array:
     return opened
 
 # Features
+
+
 def area(image: np.array) -> int:
     """Calculate area
 
@@ -140,6 +143,7 @@ def area(image: np.array) -> int:
     counter = dict(zip(unique, counts))
     blackPixels = counter[0]
     return blackPixels
+
 
 def entropy(image: np.array, hist: np.array) -> int:
     """Calculate entropy
@@ -158,8 +162,10 @@ def entropy(image: np.array, hist: np.array) -> int:
 
 
 def calculatePerimeter(image: np.array) -> float:
-    interior = abs(np.diff(image, axis=0)).sum() + abs(np.diff(image, axis=1)).sum()
-    boundary = image[0,:].sum() + image[:,0].sum() + image[-1,:].sum() + image[:,-1].sum()
+    interior = abs(np.diff(image, axis=0)).sum() + \
+        abs(np.diff(image, axis=1)).sum()
+    boundary = image[0, :].sum() + image[:, 0].sum() + \
+        image[-1, :].sum() + image[:, -1].sum()
     perimeter = interior + boundary
     return perimeter
     """ 
@@ -191,6 +197,7 @@ def calculatePerimeter(image: np.array) -> float:
     
     return radius """
 
+
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     """10 fold crossvalidation
 
@@ -216,6 +223,7 @@ def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
 
     return np.array(resultFoldDataSet)
 
+
 def euclideanDistance(row1: np.array, row2: np.array) -> float:
     """Euclidean distance calculation
 
@@ -228,20 +236,24 @@ def euclideanDistance(row1: np.array, row2: np.array) -> float:
     """
     distance = 0.0
     for i in range(len(row1)-1):
-	    distance += (row1[i] - row2[i])**2
+        distance += (row1[i] - row2[i])**2
     return sqrt(distance)
 
+
 def getNeighbors(train: np.array, testRow: np.array, K: int) -> np.array:
-    distances = [(train_row, euclideanDistance(testRow, train_row)) for train_row in train]
+    distances = [(train_row, euclideanDistance(testRow, train_row))
+                 for train_row in train]
     distances.sort(key=lambda tup: tup[1])
     neighbors = np.array([distances[i][0] for i in range(K)])
     return neighbors
+
 
 def makePrediction(train: np.array, testRow: np.array, K: int = 3) -> np.array:
     neighborsResult = getNeighbors(train, testRow, K)
     outputValues = [eachRow[-1] for eachRow in neighborsResult]
     prediction = max(set(outputValues), key=outputValues.count)
     return prediction
+
 
 def kNearestNeighbors(train: np.array, testDataset: np.array, K: int) -> np.array:
     """KNN
@@ -255,6 +267,7 @@ def kNearestNeighbors(train: np.array, testDataset: np.array, K: int) -> np.arra
         np.array: Predicted Array
     """
     return np.array([makePrediction(train, row, K) for row in testDataset])
+
 
 def getAccuracy(actual, predicted):
     """Calculate accuracy
