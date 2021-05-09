@@ -2,24 +2,34 @@
 
 ## Overview
 
+
+The objective of the program is to classify the images to their cell-appropriate types (cyl, inter, let, mod, para, super, or svar). Below are the series of steps performed on the images 
 * Take cell images as input. 
-* Run the operations on each image
-    * Created segmented image with  
-* A TOML file for configuration of attributes input, output, k-bound and number of folds
+* Extract Features and save them to CSV file
+* Load the CSV feature file data for k nearest neighbor
+* Execute k-nearest neighbor on the loaded dataset with k-fold cross-validation, outputting the accuracy of cross-validation
+* A TOML file for configuration of attributes input, output, k-bound, and number of folds
 
 ## Usage
 
 ```
-git clone https://github.com/praveenarallabandi/ImageAnalysis.git
+git clone https://github.com/praveenarallabandi/ImageFeatures.git
 cd ImageAnalysis
 pip3 install --user pipenv
-python ImageAnalysisPart1.py
+python ImageAnalysisPart3.py
 ```
 
 ## Implementation
 
-The project implementation is done using Python. Using Python, we can rapidly develop and integrate each operation. Python's NumPy library, which allows for array operations. 
+### Feature Extraction 
 
+The feature extracted from images are
+* Area of cluster - The area of the image by calculating pixels of a cluster on the morphologically opened image
+* Entropy of image - Probability of each image combined with a single scalar value
+* Histogram Mean - Mean of the histogram on each of the occurrences of each pixel value
+* Perimeter - The perimeter of the image by summation of the interior and external boundaries of the image 
+
+The project implementation is done using Python. Using Python, we can rapidly develop and integrate each operation. Python's NumPy library, which allows for array operations. 
 Certain image array operations are time-consuming, and those scenarios were addressed with optimizing NumPy arrays (using NumPy methods as much as possible) and with numba. Numba is an open-source JIT compiler that translates a subset of Python and NumPy code into fast machine code. Numba has a python function decorator for just-in-time compiling functions to machine code before executing. Using this decorator on functions that use heavy math and looping (i.e., filters and noise) provides significant speed increases with speeds similar to using lower-level compiled languages like C/C++ or Rust. For plotting histograms, Python's `matplotlib,` the relatively standard and robust plotting library, outputs plots to a file with the rest of the exported output images.
 
 ## Dependencies 
