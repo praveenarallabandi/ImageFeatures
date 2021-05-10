@@ -1,5 +1,4 @@
 # imports
-from ImageAnalysisPart1 import convertToSingleColorSpectrum
 import math
 import numpy as np
 import numba as nb

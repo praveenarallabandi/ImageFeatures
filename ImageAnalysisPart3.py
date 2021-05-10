@@ -35,6 +35,7 @@ def groupImageClass(entries):
     """
     imgLabel = ""
     classLabelName = ""
+    imgCount = 0
 
     for entry in entries:
         if entry.is_file() and entry.name != '.DS_Store':
@@ -66,6 +67,7 @@ def groupImageClass(entries):
                 imgLabel = 7
                 classLabelName = 'svar'
     
+            imgCount += 1
             processImageFeatures(entry, imgLabel, classLabelName)
     
     # Save features to CSV
@@ -75,13 +77,14 @@ def groupImageClass(entries):
     outPath = conf["OUTPUT_DIR"] + conf["CSV_FILE"]
     np.savetxt(outPath, np.array(normalizeRes), delimiter=',')
     print('----------Processing Features - completed-----------')
-    print(f"Results saved to {Fore.CYAN}{outPath}{Style.RESET_ALL} file")
+    print(f"Total Images Processsed: {Fore.CYAN}{imgCount}{Style.RESET_ALL}")
+    print(f"Results save successfull: {Fore.CYAN}{outPath}{Style.RESET_ALL}")
     print('--------------------KNN Started---------------------')
     knn()
 
 def knn():
     try:
-        featuresDataSet = np.loadtxt(conf["CSV_FILE"], delimiter=",")
+        featuresDataSet = np.loadtxt(conf["OUTPUT_DIR"] + conf["CSV_FILE"], delimiter=",")
         # print(featuresDataSet)
         K = int(conf["K_MAX_BOUND"]) 
         totalAverageAccuracy = 0.0
