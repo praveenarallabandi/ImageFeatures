@@ -1,4 +1,4 @@
-# Image Analysis - Part1
+# Image Analysis - Part3
 
 ## Overview
 
@@ -16,7 +16,7 @@ The operations are performed with ```numpy``` and not used any existing third-pa
 
 ```
 git clone https://github.com/praveenarallabandi/ImageFeatures.git
-cd ImageAnalysis
+cd ImageFeatures
 pip3 install --user pipenv
 python ImageAnalysisPart3.py
 ```
@@ -38,55 +38,19 @@ The testing is performed with k-fold(default to 10) cross validation. Each of th
 
 * Compute the diatance consistently of every training instance using ```euclidean distance```
 * select the closest k instances and their frequent labeled class as predicted for the testrow
-* 
 
 ## Dependencies 
 
 * numpy - For Array operations
-* numba - JIT for speed exectuion
 * toml - Configuration settings
 * PIL (Image) - Used only for importing and exporting images
 
- ## Functions
-
-```python
-def calculateHistogram(image: np.array) -> np.array:
-```
-`calculate_histogram` Generates the histogram, equalized histogram, and quantized image based on the equalized histogram
-
-```python
-def image_quantization_mse(image: np.array, imageQuant: np.array, imageName: str) -> float:
-```
- `image_quantization_mse` Calculates mean square error for two input images
-
-```python
-def convertToSingleColorSpectrum(image: np.array, colorSpectrum: str) -> np.array:
-```
-`convertToSingleColorSpectrum` Generates the NumPy array for a single color spectrum.
-
-```python
-def corruptImageGaussian(image: np.array, strength: int) ->  np.array:
-```
-`corruptImageGaussian` Generates image with gaussian noise applied
-
-```python
-def corruptImageSaltAndPepper(image: np.array, strength: int) -> np.array:
-```
-`corruptImageSaltAndPepper` Generates image with salt and pepper noise applied
-
-```python
-def linearFilter(image, maskSize=9, weights = List[List[int]]) -> np.array:
-```
-`linearFilter` Receives a kernel or matrix of weights as a two-dimensional input list and applies that kernel to a copy of an image. The filter is then applied in loops through each pixel in the image and multiples the neighboring pixels' values by the kernel weights. The larger the kernel, the larger the pixel's neighborhood that affects the pixel. 
-
-```python
-def medianFilter(image, maskSize=9, weights = List[List[int]]):
-```
-`medianFilter` The median filter is applied to the input image, and each pixel is replaced with the median value of its neighbors. The current pixel value as well is included in the median calculation.
-
 ## Results
 
-The output images are stored in output directory, mean square errors for each image is printed on stdout alsong with performance metrics
-Below is th snapshop of output
+Below is a sample of what the results reported from the cross fold validation for different values of k. The results obtained on the dataset seemed to indicate that the features extracted from the images weren't distinguishable enough to classify the cells as their respective type. Test on more values of k didn't seem to improve the results of the classification. 
 
-<img width="592" alt="Screen Shot 2021-03-15 at 9 50 24 PM" src="https://user-images.githubusercontent.com/44982889/111244241-e537c680-85d8-11eb-9479-3109ef7965f1.png">
+* The range for the mean accuracies between k values around 20% to 30% with toal average accuracy at 22% for 21 images 
+
+<img width="592" alt="Screen Shot 2021-03-15 at 9 50 24 PM" src="./assets/21-Images-AllClasses.png">
+
+* The range for the mean accuracies between k values around 20% to 30% with toal average accuracy at 22% for 21 images 
