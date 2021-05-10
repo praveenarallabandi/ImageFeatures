@@ -79,6 +79,8 @@ def histogramThresholding(image: np.array, hist: np.array) -> np.array:
     imageCopy = imageCopy.astype(np.uint8)
     return imageCopy.reshape(image.shape)
 
+def getTileArray(array, n):
+    return np.tile(array, (n, 1)).flatten()
 
 def erosion(image: np.array, erosionLevel: int = 3) -> np.array:
     initArray = np.zeros_like(image)
@@ -89,8 +91,8 @@ def erosion(image: np.array, erosionLevel: int = 3) -> np.array:
     yTileArray = tileArray.T.flatten()
 
     n = len(x.flatten())
-    xTileArray = np.tile(xTileArray, (n, 1)).flatten()
-    yTileArray = np.tile(yTileArray, (n, 1)).flatten()
+    xTileArray = getTileArray(xTileArray, n)
+    yTileArray = getTileArray(yTileArray, n)
 
     index = np.sqrt(xTileArray ** 2 + yTileArray ** 2) > erosionLevel
     xTileArray[index] = 0
@@ -167,35 +169,6 @@ def calculatePerimeter(image: np.array) -> float:
         image[-1, :].sum() + image[:, -1].sum()
     perimeter = interior + boundary
     return perimeter
-    """ 
-    center = np.array((0.0, 0.0))
-    radius = 0.0001
-    for r in range(2):
-        for pos, x in np.ndenumerate(image):
-            arrayAtPosition = np.array(pos)
-            if x != 0:
-                continue
-            diff = arrayAtPosition - center
-            dist = np.sqrt(np.sum(diff ** 2))
-            if dist < radius:
-                continue
-            alpha = dist / radius
-            radius = 0.5 * (alpha + 1.0 / alpha) * radius
-            center = 0.5 * ((1.0 + 1.0 / (alpha ** 2)) * center + (1.0 - 1.0 / (alpha ** 2)) * arrayAtPosition)
-
-    for index, val in np.ndenumerate(image):
-        arrayAtPosition = np.array(index)
-        diff = arrayAtPosition - center
-        dist = np.sqrt(np.sum(diff ** 2))
-
-        if dist < radius:
-            break
-
-        radius = (radius + dist) / 2.0
-        center += (dist - radius) / dist * np.subtract(arrayAtPosition, center)
-    
-    return radius """
-
 
 def crossValidationSplit(featureDataSet: np.array, n_folds: int) -> np.array:
     """10 fold crossvalidation
@@ -243,7 +216,7 @@ def getNeighbors(train: np.array, testRow: np.array, K: int) -> np.array:
     distances = [(train_row, euclideanDistance(testRow, train_row))
                  for train_row in train]
     distances.sort(key=lambda tup: tup[1])
-    neighbors = np.array([distances[i][0] for i in range(K)])
+    neighbors = np.array([distances[index][0] for index in range(K)])
     return neighbors
 
 
