@@ -28,12 +28,12 @@ def getSingleChannel(image: np.array, colorSpectrum: str) -> np.array:
 
 
 def histogram(image: np.array) -> np.array:
-    hist: np.array = np.zeros(256)
     imageSize: int = len(image)
-    for pixel_value in range(256):
-        for i in range(imageSize):
-            if image.flat[i] == pixel_value:
-                hist[pixel_value] += 1
+    hist: np.array = np.zeros(256)
+    for pixel in range(256):
+        for index in range(imageSize):
+            if image.flat[index] == pixel:
+                hist[pixel] += 1
     return hist
 
 def histogramThresholding(image: np.array, hist: np.array) -> np.array:
