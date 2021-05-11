@@ -13,6 +13,7 @@ from PIL import Image # Used only for importing and exporting images
 from imageLib import *
 
 featuresListCsv = []
+imageLib = ImageLib()
 
 def normalize(dataset: np.array) -> np.array:
 
@@ -92,7 +93,7 @@ def knn():
         for k in range(1, K + 1):
             print(f"{Fore.CYAN}k = {k}{Style.RESET_ALL}")
             # 10 fold cross validation
-            folds = crossValidationSplit(featuresDataSet, conf["FOLDS"])
+            folds = imageLib.crossValidationSplit(featuresDataSet, conf["FOLDS"])
             scores = []
             avgAccuracy = 0.0
             for index,fold in enumerate(folds):
@@ -103,8 +104,8 @@ def knn():
                 
                 actualClassColumn = np.size(test_dataset,1) - 1
                 actual = test_dataset[:,actualClassColumn]
-                predicted = kNearestNeighbors(train_dataset, test_dataset, k)
-                accuracy = getAccuracy(actual, predicted)
+                predicted = imageLib.kNearestNeighbors(train_dataset, test_dataset, k)
+                accuracy = imageLib.getAccuracy(actual, predicted)
                 scores.append(accuracy)
                 avgAccuracy = sum(scores) / float(len(scores))
             # print("\tavgAccuracy {0}".format(avgAccuracy))
@@ -136,19 +137,19 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         # Get image details
         image = np.asarray(Image.open(conf["INPUT_DIR"] + entry.name))
         
-        singleSpectrumImage = getSingleChannel(image, conf["COLOR_CHANNEL"])
+        singleSpectrumImage = imageLib.getSingleChannel(image, conf["COLOR_CHANNEL"])
 
         # Histogram calculation for each individual image
-        histogramResult = histogram(singleSpectrumImage)
+        histogramResult = imageLib.histogram(singleSpectrumImage)
         # segmentation
-        openingResult = opening(singleSpectrumImage, histogramResult)
+        openingResult = imageLib.opening(singleSpectrumImage, histogramResult)
 
         # Feature1 - Calculate Entropy
-        entropyResultFeature1 = entropy(singleSpectrumImage, histogramResult)
+        entropyResultFeature1 = imageLib.entropy(singleSpectrumImage, histogramResult)
         print('entropyResultFeature1: {0}'.format(entropyResultFeature1))
 
         # Feature2 - Calculate Area
-        areaCalculatedFeature2 = area(openingResult)
+        areaCalculatedFeature2 = imageLib.area(openingResult)
         print('areaCalculatedFeature2: {0}'.format(areaCalculatedFeature2))
 
         # Feature 3 - Calculate Histogram Mean
@@ -156,7 +157,7 @@ def processImageFeatures(entry, imgLabel: int, classLabelName):
         print('histogramMeanFeature3: {0}'.format(histogramMeanFeature3))
 
         # Feature 4 - Calculate permimeter
-        perimeterFeature4 = calculatePerimeter(openingResult)
+        perimeterFeature4 = imageLib.calculatePerimeter(openingResult)
         print('perimeterFeature4: {0}'.format(perimeterFeature4))
 
         # Last column label name
